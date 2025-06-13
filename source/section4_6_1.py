@@ -1,65 +1,78 @@
 """
 【概要】
 GitHub 上の LangChain リポジトリをクローンし、拡張子 .mdx のドキュメントだけを
-LangChain の `GitLoader` で読み込む最小サンプルです。
+LangChain の `GitLoader` で読み込み、さらに 1,000 文字ごとに分割（チャンク化）
+する最小サンプルです。
 
-処理の流れは次の 4 ステップ:
- 1) **フィルタ関数 `file_filter`** を用意して、読み込む対象を .mdx ファイルに限定。
+処理の流れは次の 5 ステップ:
+ 1) **フィルタ関数 `file_filter`** を用意し、読み込む対象を .mdx ファイルに限定。
  2) **`GitLoader` を初期化** し、どのリポジトリ／ブランチ／ローカルパスを使うか設定。
- 3) **`load()` を実行** すると、クローン（または更新）→ ファイル走査 → フィルタ適用 → ドキュメント生成。
- 4) **読み込んだ件数を `print`** して動作確認。
+ 3) **`load()` を実行** してドキュメントを取得（clone/pull → 走査 → フィルタ → Document 生成）。
+ 4) **取得した件数を `print`** して動作確認。
+ 5) **`CharacterTextSplitter` でチャンク化** し、再度件数を `print`。
 
-このスクリプトを実行すると、カレントフォルダ直下に `./langchain` というローカルリポジトリ
-フォルダが作成（もしくは更新）され、その中から `.mdx` ファイルのみが読み込まれます。
+このスクリプトを実行すると、カレントフォルダ直下に `./langchain` というローカル
+リポジトリが作成（もしくは更新）され、その中から `.mdx` ファイルだけが対象となります。
 """
 
+# ============================================================
+# 必要ライブラリのインポート
+# ------------------------------------------------------------
+# GitLoader : Git リポジトリを自動クローン／更新して Document を生成
+# ============================================================
 from langchain_community.document_loaders import (
-    GitLoader,
-)  # ← Git リポジトリからドキュメントを読み込むユーティリティ
+    GitLoader,  # ← Git からドキュメントを読み込むユーティリティ
+)
+
 
 # ------------------------------------------------------------
-# ① 対象ファイルを絞り込むためのフィルタ関数を定義
-#    GitLoader はリポジトリ内の各ファイルパスをこの関数に渡し、
-#    True が返ったファイルだけをドキュメントとして読み込みます。
+# ① 対象ファイルを絞り込むフィルタ関数
+#    GitLoader はリポジトリ内の全ファイルパスをこの関数に渡し、
+#    True が返ったファイルのみを Document 化します。
 # ------------------------------------------------------------
-
-
-def file_filter(
-    file_path: str,
-) -> bool:  # ← 文字列型(file_path)を受け取り、結果を真偽値で返す
+def file_filter(file_path: str) -> bool:
     """拡張子が .mdx のファイルだけを通すフィルタ関数"""
-    return file_path.endswith(
-        ".mdx"
-    )  # ← .mdx で終わるファイルなら True、それ以外は False
+    return file_path.endswith(".mdx")  # ← ".mdx" で終わるなら True、それ以外は False
 
 
 # ------------------------------------------------------------
 # ② GitLoader を初期化
-#    - clone_url : クローン元となる GitHub リポジトリ URL
-#    - repo_path : ローカルにクローンするフォルダパス（すでに存在すれば pull 更新）
-#    - branch    : 参照するブランチ名（ここでは master）
-#    - file_filter : 先ほど定義したフィルタ関数
+#    clone_url  : クローン元 GitHub リポジトリ URL
+#    repo_path  : ローカルにクローンするディレクトリ（既存なら pull 更新）
+#    branch     : 対象ブランチ（ここでは master）
+#    file_filter: 先ほど定義したフィルタ関数
 # ------------------------------------------------------------
-
-loder = GitLoader(  # ← GitLoader インスタンスを生成（※変数名は元コードを尊重してあえて typo のまま）
+loder = GitLoader(  # ← インスタンス生成（※typo を残す方針）
     clone_url="http://github.com/langchain-ai/langchain",  # ← LangChain 本家リポジトリ
-    repo_path="./langchain",  # ← クローン先ディレクトリ（既存なら差分だけ pull）
+    repo_path="./langchain",  # ← クローン先ディレクトリ
     branch="master",  # ← master ブランチを対象
-    file_filter=file_filter,  # ← .mdx だけ読み込む
+    file_filter=file_filter,  # ← .mdx だけを読み込む
 )
 
 # ------------------------------------------------------------
 # ③ ドキュメントの読み込みを実行
-#    load() が以下の一連の処理を行います。
-#      1) リポジトリの clone または pull
-#      2) 全ファイルを走査して file_filter で絞り込み
-#      3) 対象ファイルを LangChain Document 型に変換
+#    .load() は clone/pull → 走査 → フィルタ → Document 化 を一括で行います。
 # ------------------------------------------------------------
-
-raw_docs = loder.load()  # ← 結果は List[Document] として返る
+raw_docs = loder.load()  # ← List[Document] が返る
 
 # ------------------------------------------------------------
-# ④ 読み込んだドキュメントの件数を表示
+# ④ 読み込んだドキュメント件数を表示
 # ------------------------------------------------------------
+print(len(raw_docs))  # ← 取得した .mdx ドキュメント数を確認
 
-print(len(raw_docs))  # ← 取得できたドキュメント数を標準出力に表示
+# ============================================================
+# ⑤ ドキュメントを 1,000 文字ごとにチャンク化
+#    - chunk_size    : 1 チャンクあたりの最大文字数
+#    - chunk_overlap : チャンク間の重なり（0 なら重複なし）
+# ============================================================
+from langchain_text_splitters import (
+    CharacterTextSplitter,
+)  # ← 文字数で分割するユーティリティ
+
+text_splitter = CharacterTextSplitter(
+    chunk_size=1000,  # ← 1,000 文字ごとに分割
+    chunk_overlap=0,  # ← 重複なし
+)
+
+docs = text_splitter.split_documents(raw_docs)  # ← 分割後の Document を取得
+print(len(docs))  # ← チャンク総数を表示
