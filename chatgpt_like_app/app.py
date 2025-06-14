@@ -36,8 +36,9 @@ if "messages" not in st.session_state:
     ]
 
 st.title("💬 ChatGPT 風チャット")
-user_input = st.text_input("メッセージを入力...", key="user_input")
-send = st.button("送信", use_container_width=True)
+with st.form(key="chat_form", clear_on_submit=True):
+    user_input = st.text_input("メッセージを入力...", key="user_input")
+    submitted = st.form_submit_button("送信")
 clear = st.button("🗑️ クリア", use_container_width=True)
 
 # クリアボタン押下時は履歴を初期化してリロード
@@ -46,7 +47,7 @@ if clear:
     st.rerun()
 
 # メッセージ送信処理
-if send and user_input.strip():
+if submitted and user_input.strip():
     st.session_state["messages"].append({"role": "user", "content": user_input})
 
     assistant_response = ""
