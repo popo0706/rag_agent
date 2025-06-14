@@ -2,3 +2,4 @@
 .venv_3_11/
 .venv_3_12/
 .env
+.langchain/
