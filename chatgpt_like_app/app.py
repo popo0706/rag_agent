@@ -24,7 +24,10 @@ with st.sidebar:
         "gpt-4.1-nano",
     ]
     model_name = st.selectbox("使用モデル", AVAILABLE_MODELS, index=0)
-    temperature = st.slider("温度 (創造性)", 0.0, 1.0, 0.7, 0.05)
+    if model_name not in ["o3", "o3-mini"]:
+        temperature = st.slider("温度 (創造性)", 0.0, 1.0, 0.7, 0.05)
+    else:
+        temperature = None
 
 # セッションステートに会話履歴を初期化
 if "messages" not in st.session_state:
@@ -40,7 +43,7 @@ clear = st.button("🗑️ クリア", use_container_width=True)
 # クリアボタン押下時は履歴を初期化してリロード
 if clear:
     st.session_state["messages"] = st.session_state["messages"][:1]
-    st.experimental_rerun()
+    st.rerun()
 
 # メッセージ送信処理
 if send and user_input.strip():
