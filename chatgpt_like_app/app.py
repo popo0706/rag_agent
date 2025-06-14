@@ -21,7 +21,7 @@ with st.sidebar:
     AVAILABLE_MODELS = [
         "o3",
         "o3-mini",
-        "gpt-3.5-turbo",
+        "gpt-4.1-nano",
     ]
     model_name = st.selectbox("使用モデル", AVAILABLE_MODELS, index=0)
     temperature = st.slider("温度 (創造性)", 0.0, 1.0, 0.7, 0.05)
@@ -47,20 +47,23 @@ if send and user_input.strip():
     st.session_state["messages"].append({"role": "user", "content": user_input})
 
     assistant_response = ""
-    try:
-        stream = client.chat.completions.create(
-            model=model_name,
-            messages=st.session_state["messages"],
-            temperature=temperature,
-            stream=True,
-        )
-        for chunk in stream:
-            token = chunk.choices[0].delta.content or ""
-            assistant_response += token
-        # ストリーミングによる個別表示は削除し、下部の履歴表示ループで全体を表示します
-    except Exception as e:
-        st.error(f"エラーが発生しました: {str(e)}")
-        assistant_response = "エラーが発生しました。"
+    with st.spinner("送信中…"):
+        try:
+            kwargs = {
+                "model": model_name,
+                "messages": st.session_state["messages"],
+                "stream": True,
+            }
+            if model_name not in ["o3", "o3-mini"]:
+                kwargs["temperature"] = temperature
+            stream = client.chat.completions.create(**kwargs)
+            for chunk in stream:
+                token = chunk.choices[0].delta.content or ""
+                assistant_response += token
+            # ストリーミングによる個別表示は削除し、下部の履歴表示ループで全体を表示します
+        except Exception as e:
+            st.error(f"エラーが発生しました: {str(e)}")
+            assistant_response = "エラーが発生しました。"
 
     st.session_state["messages"].append(
         {"role": "assistant", "content": assistant_response}
