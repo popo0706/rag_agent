@@ -74,15 +74,19 @@ if send and user_input.strip():
 
 # 会話履歴の表示（system メッセージを除く）
 import streamlit.components.v1 as components
+import re
 
 for i, msg in enumerate(st.session_state["messages"][1:]):
+    text_to_copy = re.sub(
+        r"^(user|assistant):\s*", "", msg["content"], flags=re.IGNORECASE
+    )
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         components.html(
             f"""
             <div style="margin-top: 5px;">
                 <button onclick="copy_{i}()">この会話をコピー</button>
-                <textarea id="copy_text_{i}" style="opacity: 0; position: absolute;">{msg["role"]}: {msg["content"]}</textarea>
+                <textarea id="copy_text_{i}" style="opacity: 0; position: absolute;">{text_to_copy}</textarea>
                 <script>
                     function copy_{i}() {{
                         var copyText = document.getElementById("copy_text_{i}");
@@ -92,6 +96,6 @@ for i, msg in enumerate(st.session_state["messages"][1:]):
                     }}
                 </script>
             </div>
-        """,
+            """,
             height=60,
         )
