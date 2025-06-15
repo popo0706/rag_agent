@@ -85,15 +85,23 @@ for i, msg in enumerate(st.session_state["messages"][1:]):
         st.markdown(msg["content"])
         components.html(
             f"""
-            <div style="margin-top: 5px;">
-                <button onclick="copy_{i}()">この会話をコピー</button>
+            <div style="position: relative; margin-top: 5px; padding-top: 0;">
+<button id="copy_button_{i}" onclick="copy_{i}()" style="position: absolute; top: -5px; right: 0; margin: 0; padding: 5px;">この会話をコピー</button>
                 <textarea id="copy_text_{i}" style="opacity: 0; position: absolute;">{text_to_copy}</textarea>
                 <script>
                     function copy_{i}() {{
+                        var btn = document.getElementById("copy_button_{i}");
+                        if (btn.timeoutId) {{
+                            clearTimeout(btn.timeoutId);
+                        }}
                         var copyText = document.getElementById("copy_text_{i}");
                         copyText.select();
                         document.execCommand("copy");
-                        alert("コピーしました！");
+                        btn.innerText = "コピーしました！";
+                        btn.timeoutId = setTimeout(function() {{
+                            btn.innerText = "この会話をコピー";
+                            btn.timeoutId = null;
+                        }}, 2000);
                     }}
                 </script>
             </div>
