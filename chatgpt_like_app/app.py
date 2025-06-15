@@ -86,7 +86,7 @@ for i, msg in enumerate(st.session_state["messages"][1:]):
         components.html(
             f"""
             <div style="position: relative; margin-top: 5px; padding-top: 0;">
-<button id="copy_button_{i}" onclick="copy_{i}()" style="position: absolute; top: -5px; right: 0; margin: 0; padding: 5px;">この会話をコピー</button>
+<button id="copy_button_{i}" onclick="copy_{i}()" style="position: absolute; top: -5px; right: 0; margin: 0; padding: 5px; background-color: transparent; border: none; color: #cccccc; cursor: pointer;">この会話をコピー</button>
                 <textarea id="copy_text_{i}" style="opacity: 0; position: absolute;">{text_to_copy}</textarea>
                 <script>
                     function copy_{i}() {{
