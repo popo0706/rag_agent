@@ -36,7 +36,7 @@ if "messages" not in st.session_state:
     ]
 
 st.title("💬 ChatGPT 風チャット")
-user_input = st.text_input("メッセージを入力...", key="user_input")
+user_input = st.text_area("メッセージを入力...", key="user_input")
 send = st.button("送信", use_container_width=True)
 clear = st.button("🗑️ クリア", use_container_width=True)
 
