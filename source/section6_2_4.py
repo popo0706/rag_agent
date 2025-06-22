@@ -31,13 +31,10 @@ from langchain_community.document_loaders import (
 
 # ---------- LangSmith（LangChain のログ可視化サービス）の設定 ----------
 os.environ["LANGCHAIN_TRACING_V2"] = "true"  # トレーシングを有効化
-os.environ["LANGCHAIN_ENDPOINT"] = (
-    "https://api.smith.langchain.com"  # エンドポイント URL
+project_name = os.path.splitext(os.path.basename(__file__))[0]
+os.environ["LANGCHAIN_PROJECT"] = (
+    project_name  # プロジェクト名（ファイル名から自動設定）
 )
-os.environ["LANGCHAIN_API_KEY"] = (
-    "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"  # APIキー
-)
-os.environ["LANGCHAIN_PROJECT"] = "6-2-4"  # プロジェクト名（任意）
 
 
 # ---------- .mdx ファイルだけを通すフィルタ関数 ----------
