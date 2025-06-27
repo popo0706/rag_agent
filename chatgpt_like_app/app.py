@@ -15,6 +15,14 @@ client = OpenAI(api_key=api_key)
 # Streamlit のページ設定
 st.set_page_config(page_title="ChatGPT 風チャット", page_icon="💬", layout="wide")
 
+ROLE_MAP = {
+    "通常の質問": "AAA",
+    "ソースコードコメント": "BBB",
+    "エラー調査": "CCC",
+}
+
+# サイドバー：設定オプション
+
 # サイドバー：設定オプション
 with st.sidebar:
     st.header("⚙️ 設定")
@@ -29,10 +37,42 @@ with st.sidebar:
     else:
         temperature = None
 
+    st.subheader("システムロール")
+    ROLE_NAMES = ["通常の質問", "ソースコードコメント", "エラー調査"]
+    role_name = st.selectbox("システムロール", ROLE_NAMES, index=0)
+
+ROLE_MAP = {
+    "通常の質問": "あなたは優秀なアシスタントです。これから質問をしますので、中学生でも理解できるように丁寧に、回答が長くてもいいのでしっかりと説明してください。",
+    "ソースコードコメント": """
+        # ソースコードコメント追加
+        # 命令
+            -あなたは一流の開発者で、開発PJのリーダです。
+            -これから開発知識ゼロの新人がPJに参画するため、これから添付する研修用のソースコードに丁寧なコメントを記述してください。
+        # 前提
+            -元のソースコードの実装部分は変更しないでください。
+        # 条件
+            - 開発知識ゼロの新人のため、メソッド単位などではなく、一行ごとに丁寧なコメントを記載してください。
+            - 難しそうな箇所、間違いそうな箇所などについてはより丁寧なコメントを記載してください。
+            - 元のコメントについては間違っている可能性が高く、一度コメントをすべて削除したうえで実行してください。
+            - 大事なことなので繰り返しますが、元のコメントについては間違っている可能性が高く、一度コメントをすべて削除したうえで実行してください。
+            - ソースコードの先頭にソースコードの要約説明を記載してください。そのうえで各行にコメントを追加してください。
+            - ソースコードの先頭にソースコードの要約説明の中に、'''今回の学習'''ポイントとしてあなたのアドバイスを追加してください。
+            - もとのソースコード部分は変更しないでください。不備や改善余地がある場合は別にアドバイスとしてソースコード外でコメントしてください。
+            # 入力
+            -これから添付するソースコード
+            # 出力
+            -コピペしてエディタに貼り付けられるようにソースコードの形
+    """,
+    "エラー調査": "CCC",
+}
+initial_system_content = ROLE_MAP.get(role_name)
+# サイドバーで選択したsystemロールを先頭に常に反映
+if "messages" in st.session_state and st.session_state["messages"]:
+    st.session_state["messages"][0]["content"] = initial_system_content
 # セッションステートに会話履歴を初期化
 if "messages" not in st.session_state:
     st.session_state["messages"] = [
-        {"role": "system", "content": "あなたは優秀なアシスタントです。"}
+        {"role": "system", "content": initial_system_content}
     ]
 
 st.title("💬 ChatGPT 風チャット")
@@ -43,7 +83,9 @@ clear = st.button("🗑️ クリア", use_container_width=True)
 
 # クリアボタン押下時は履歴を初期化してリロード
 if clear:
-    st.session_state["messages"] = st.session_state["messages"][:1]
+    st.session_state["messages"] = [
+        {"role": "system", "content": initial_system_content}
+    ]
     st.rerun()
 
 # メッセージ送信処理

@@ -3,3 +3,4 @@
 .venv_3_12/
 .env
 .langchain/
+.venv_311_ragas/

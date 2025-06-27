@@ -5,5 +5,6 @@ pip list
 pip check
 ## スナップショットを残す（バックアップ）
 pip freeze > requirements_backup.txt
+pip freeze > rags_requirements_backup.txt
 ### バックアップからの復旧
 pip install -r requirements_backup.txt
